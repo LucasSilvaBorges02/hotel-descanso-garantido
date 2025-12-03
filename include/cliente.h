@@ -10,7 +10,8 @@ typedef struct {
 
 /**
  * Cadastra um novo cliente no arquivo de clientes.
- * Retorna 0 em caso de sucesso, diferente de 0 em caso de erro.
+ * Entrada: struct Cliente com dados preenchidos.
+ * Saída: 0 em caso de sucesso, diferente de 0 em erro (ex: código já existe).
  */
 int cadastrar_cliente(Cliente novoCliente);
 
