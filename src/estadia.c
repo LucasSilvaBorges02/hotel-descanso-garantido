@@ -10,7 +10,6 @@
 
 #define ARQ_ESTADIAS "data/estadias.dat"
 #define ARQ_QUARTOS "data/quartos.dat"
-#define ARQ_CLIENTES "data/clientes.dat"
 
 // Função auxiliar de data
 static time_t data_para_time(int d, int m, int a, int hora) {
@@ -29,10 +28,10 @@ int calcularDiarias(int d1, int m1, int a1, int d2, int m2, int a2) {
     return (diarias < 1) ? 1 : diarias;
 }
 
-// Verifica conflito LENDO DO ARQUIVO
+// Verifica conflito de datas
 int verificarConflitoArquivo(int numQuarto, int d1, int m1, int a1, int d2, int m2, int a2) {
     FILE *f = fopen(ARQ_ESTADIAS, "rb");
-    if (!f) return 0; // Sem estadias, sem conflito
+    if (!f) return 0;
 
     time_t novo_inicio = data_para_time(d1, m1, a1, 14);
     time_t novo_fim = data_para_time(d2, m2, a2, 12);
@@ -57,21 +56,22 @@ void cadastrarEstadia() {
     Estadia nova;
     int qtdHospedes;
     
-    // 1. Validar Cliente
     printf("Codigo do Cliente: ");
     scanf("%d", &nova.codigoCliente);
     
-    // Como não temos acesso direto ao header do cliente aqui para ver a função, 
-    // assumimos que codigo_cliente_existe funciona ou incluimos a lógica.
-    // Se der erro de compilação aqui, verifique se clientes.h tem essa função.
     if (!codigo_cliente_existe(nova.codigoCliente)) {
         printf("Cliente nao encontrado!\n");
         return;
     }
 
-    // 2. Coletar dados
     printf("Qtd Hospedes: ");
     scanf("%d", &qtdHospedes);
+    
+    if (qtdHospedes <= 0) {
+        printf("Qtd de hospedes invalida.\n");
+        return;
+    }
+
     printf("Entrada (DD MM AAAA): ");
     scanf("%d %d %d", &nova.diaEntrada, &nova.mesEntrada, &nova.anoEntrada);
     printf("Saida (DD MM AAAA): ");
@@ -85,7 +85,6 @@ void cadastrarEstadia() {
         return;
     }
 
-    // 3. Buscar Quarto (Lendo arquivo de Quartos)
     FILE *fQuartos = fopen(ARQ_QUARTOS, "rb");
     if (!fQuartos) { printf("Sem quartos cadastrados.\n"); return; }
     
@@ -108,10 +107,9 @@ void cadastrarEstadia() {
         return;
     }
 
-    // 4. Salvar Estadia
     nova.numeroQuarto = quartoEncontrado;
     nova.ativo = 1;
-    nova.codigo = (int)time(NULL); // Gera ID
+    nova.codigo = (int)time(NULL); 
 
     FILE *fEst = fopen(ARQ_ESTADIAS, "ab");
     fwrite(&nova, sizeof(Estadia), 1, fEst);
@@ -137,17 +135,14 @@ void baixarEstadia() {
     int achou = 0;
     while(fread(&e, sizeof(Estadia), 1, f)) {
         if (e.ativo && e.codigo == codEstadia) {
-            e.ativo = 0; // Finaliza
+            e.ativo = 0; // Check-out
             
-            // Volta cursor para sobrescrever
             fseek(f, -(long)sizeof(Estadia), SEEK_CUR);
             fwrite(&e, sizeof(Estadia), 1, f);
             
-            // Calcula preço
             float valorDiaria = buscarValorDiaria(e.numeroQuarto);
             float total = e.qtdDiarias * valorDiaria;
             
-            // Libera quarto
             atualizarStatusQuarto(e.numeroQuarto, DESOCUPADO);
             
             printf("Baixa realizada! Total a pagar: R$ %.2f\n", total);
@@ -160,7 +155,6 @@ void baixarEstadia() {
     if (!achou) printf("Estadia nao encontrada ou ja baixada.\n");
 }
 
-// --- NOVA FUNÇÃO ADICIONADA ---
 void listarEstadias() {
     FILE *f = fopen(ARQ_ESTADIAS, "rb");
     if (!f) {

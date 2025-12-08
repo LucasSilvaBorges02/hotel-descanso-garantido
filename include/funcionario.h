@@ -8,7 +8,7 @@ typedef struct {
     float salario;
 } Funcionario;
 
-// Protótipos das funções
+// Protótipos
 void cadastrarFuncionario();
 void listarFuncionario();
 void buscarFuncionario();

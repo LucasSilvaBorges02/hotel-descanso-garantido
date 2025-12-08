@@ -8,7 +8,8 @@ typedef struct {
     char endereco[150];
 } Cliente;
 
-int cadastrar_cliente(Cliente novoCliente);
+// Protótipos
+void cadastrar_cliente(Cliente c);
 void listar_clientes();
 int codigo_cliente_existe(int codigo);
 

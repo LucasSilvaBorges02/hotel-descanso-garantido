@@ -13,16 +13,16 @@ Integrantes:
 - Arthur Gomes
 - Lucas Silva
 
-├── src/
-│   ├── main.c
-│   ├── cliente.c
-│   ├── estadia.c
-│   ├── quarto.c
-├── include/
-│   ├── cliente.h
-│   ├── estadia.h
-│   ├── quarto.h
-├── data/
-│   ├── clientes.dat
-│   └── estadias.dat
-└── README.md
+## 🚀 Como Compilar e Rodar o Sistema
+
+Para utilizar o sistema principal (Menu do Hotel), utilize o comando abaixo no terminal:
+
+```powershell
+gcc src/*.c -I include -o hotel.exe
+./hotel.exe
+
+
+Para rodar o teste de clientes, use este comando específico:
+
+gcc tests/test_cliente.c src/cliente.c -I include -o teste_clientes.exe
+./teste_clientes.exe

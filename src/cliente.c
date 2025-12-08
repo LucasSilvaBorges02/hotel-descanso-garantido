@@ -1,53 +1,60 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "cliente.h"
+#include "../include/cliente.h"
 
-#define ARQ_CLIENTES "data/clientes.dat"
+#define ARQ_CLIENTE "data/clientes.dat"
 
+// Função auxiliar para verificar existência (usada aqui e no check-in)
 int codigo_cliente_existe(int codigo) {
-    FILE *f = fopen(ARQ_CLIENTES, "rb");
-    if (f == NULL) return 0; // arquivo ainda não existe
-
+    FILE *file = fopen(ARQ_CLIENTE, "rb");
+    if (!file) return 0;
+    
     Cliente c;
-    while (fread(&c, sizeof(Cliente), 1, f) == 1) {
+    while(fread(&c, sizeof(Cliente), 1, file)) {
         if (c.codigo == codigo) {
-            fclose(f);
+            fclose(file);
             return 1;
         }
     }
-    fclose(f);
+    fclose(file);
     return 0;
 }
 
-int cadastrar_cliente(Cliente novoCliente) {
-    if (codigo_cliente_existe(novoCliente.codigo)) {
-        printf("Ja existe cliente com codigo %d.\n", novoCliente.codigo);
-        return 1;
+void cadastrar_cliente(Cliente c) {
+    // Validação: Não permitir ID duplicado
+    if (codigo_cliente_existe(c.codigo)) {
+        printf("ERRO: Ja existe um cliente com o codigo %d.\n", c.codigo);
+        return;
     }
 
-    FILE *f = fopen(ARQ_CLIENTES, "ab");
-    if (f == NULL) {
-        printf("Erro ao abrir arquivo de clientes.\n");
-        return 2;
+    FILE *file = fopen(ARQ_CLIENTE, "ab");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return;
     }
 
-    fwrite(&novoCliente, sizeof(Cliente), 1, f);
-    fclose(f);
-    return 0;
+    fwrite(&c, sizeof(Cliente), 1, file);
+    fclose(file);
+    printf("Cliente cadastrado com sucesso!\n");
 }
 
 void listar_clientes() {
-    FILE *f = fopen(ARQ_CLIENTES, "rb");
-    if (f == NULL) {
+    FILE *file = fopen(ARQ_CLIENTE, "rb");
+    Cliente c;
+
+    if (file == NULL) {
         printf("Nenhum cliente cadastrado.\n");
         return;
     }
 
-    Cliente c;
-    printf("=== Clientes cadastrados ===\n");
-    while (fread(&c, sizeof(Cliente), 1, f) == 1) {
-        printf("Codigo: %d | Nome: %s | Tel: %s | Endereco: %s\n",
-               c.codigo, c.nome, c.telefone, c.endereco);
+    printf("\n--- Lista de Clientes ---\n");
+    while (fread(&c, sizeof(Cliente), 1, file)) {
+        printf("Codigo: %d\n", c.codigo);
+        printf("Nome: %s\n", c.nome);
+        printf("Telefone: %s\n", c.telefone);
+        printf("Endereco: %s\n", c.endereco);
+        printf("-------------------------\n");
     }
-    fclose(f);
+    fclose(file);
 }

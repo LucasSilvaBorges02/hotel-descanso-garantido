@@ -1,94 +1,105 @@
 #include <stdio.h>
-#include <string.h>
-#include "../include/quarto.h" 
+#include <stdlib.h>
+#include "../include/quarto.h"
 
-#define ARQ_QUARTOS "data/quartos.dat"
+#define ARQ_QUARTO "data/quartos.dat"
 
-// Verifica se o número do quarto já existe no arquivo
-int quarto_existe(int numero) {
-    FILE *f = fopen(ARQ_QUARTOS, "rb");
-    if (!f) return 0;
+// Função auxiliar interna para checar duplicidade
+int quartoExiste(int numero) {
+    FILE *file = fopen(ARQ_QUARTO, "rb");
+    if (!file) return 0;
 
     Quarto q;
-    while (fread(&q, sizeof(Quarto), 1, f)) {
+    while (fread(&q, sizeof(Quarto), 1, file)) {
         if (q.ativo && q.numero == numero) {
-            fclose(f);
-            return 1;
+            fclose(file);
+            return 1; 
         }
     }
-    fclose(f);
+    fclose(file);
     return 0;
 }
 
-void cadastrarQuarto(Quarto *novoQuarto) {
-    // Validação de unicidade
-    if (quarto_existe(novoQuarto->numero)) {
-        printf("Erro: Quarto numero %d ja existe!\n", novoQuarto->numero);
+void cadastrarQuarto(Quarto *q) {
+    // Validações de Regra de Negócio
+    if (q->capacidade <= 0) {
+        printf("ERRO: A capacidade deve ser maior que zero.\n");
+        return;
+    }
+    if (q->valorDiaria < 0) {
+        printf("ERRO: O valor da diaria nao pode ser negativo.\n");
+        return;
+    }
+    if (quartoExiste(q->numero)) {
+        printf("ERRO: Ja existe um quarto com o numero %d cadastrado.\n", q->numero);
         return;
     }
 
-    FILE *f = fopen(ARQ_QUARTOS, "ab");
-    if (!f) {
+    FILE *file = fopen(ARQ_QUARTO, "ab");
+    if (!file) {
         printf("Erro ao abrir arquivo de quartos.\n");
         return;
     }
-    
-    novoQuarto->ativo = 1;
-    novoQuarto->status = DESOCUPADO; // Padrão ao criar
-    
-    fwrite(novoQuarto, sizeof(Quarto), 1, f);
-    fclose(f);
-    printf("Quarto %d cadastrado com sucesso!\n", novoQuarto->numero);
+
+    q->ativo = 1; 
+    q->status = DESOCUPADO; 
+
+    fwrite(q, sizeof(Quarto), 1, file);
+    fclose(file);
+    printf("Quarto %d cadastrado com sucesso!\n", q->numero);
 }
 
 void listarQuartos() {
-    FILE *f = fopen(ARQ_QUARTOS, "rb");
-    if (!f) {
+    FILE *file = fopen(ARQ_QUARTO, "rb");
+    Quarto q;
+
+    if (!file) {
         printf("Nenhum quarto cadastrado.\n");
         return;
     }
 
-    Quarto q;
     printf("\n--- Lista de Quartos ---\n");
-    while (fread(&q, sizeof(Quarto), 1, f)) {
+    while (fread(&q, sizeof(Quarto), 1, file)) {
         if (q.ativo) {
-            printf("Quarto: %d | Cap: %d | Diaria: R$%.2f | Status: %s\n", 
-                q.numero, q.capacidade, q.valorDiaria, 
-                (q.status == OCUPADO ? "Ocupado" : "Livre"));
+            printf("Num: %d | Cap: %d | Valor: R$ %.2f | Status: %s\n", 
+                   q.numero, q.capacidade, q.valorDiaria, 
+                   (q.status == OCUPADO) ? "OCUPADO" : "DESOCUPADO");
         }
     }
-    fclose(f);
+    fclose(file);
 }
 
-// Busca e retorna o valor da diária (ou -1 se erro)
-float buscarValorDiaria(int numeroQuarto) {
-    FILE *f = fopen(ARQ_QUARTOS, "rb");
-    if (!f) return -1;
-
+void atualizarStatusQuarto(int numero, int novoStatus) {
+    FILE *file = fopen(ARQ_QUARTO, "rb+");
     Quarto q;
-    while (fread(&q, sizeof(Quarto), 1, f)) {
-        if (q.ativo && q.numero == numeroQuarto) {
-            fclose(f);
-            return q.valorDiaria;
-        }
-    }
-    fclose(f);
-    return -1;
-}
 
-// Atualiza o status do quarto no arquivo
-void atualizarStatusQuarto(int numeroQuarto, StatusQuarto novoStatus) {
-    FILE *f = fopen(ARQ_QUARTOS, "rb+");
-    if (!f) return;
+    if (!file) return;
 
-    Quarto q;
-    while (fread(&q, sizeof(Quarto), 1, f)) {
-        if (q.ativo && q.numero == numeroQuarto) {
+    while (fread(&q, sizeof(Quarto), 1, file)) {
+        if (q.numero == numero && q.ativo) {
             q.status = novoStatus;
-           fseek(f, -(long)sizeof(Quarto), SEEK_CUR);
-            fwrite(&q, sizeof(Quarto), 1, f);
+            // Move cursor para trás para sobrescrever o registro
+            fseek(file, -(long)sizeof(Quarto), SEEK_CUR);
+            fwrite(&q, sizeof(Quarto), 1, file);
             break;
         }
     }
-    fclose(f);
+    fclose(file);
+}
+
+float buscarValorDiaria(int numero) {
+    FILE *file = fopen(ARQ_QUARTO, "rb");
+    Quarto q;
+    float valor = 0.0;
+
+    if (!file) return 0.0;
+
+    while (fread(&q, sizeof(Quarto), 1, file)) {
+        if (q.numero == numero && q.ativo) {
+            valor = q.valorDiaria;
+            break;
+        }
+    }
+    fclose(file);
+    return valor;
 }

@@ -1,19 +1,22 @@
 #ifndef QUARTO_H
 #define QUARTO_H
 
-typedef enum { OCUPADO = 1, DESOCUPADO = 0 } StatusQuarto;
+// Definição de constantes para facilitar leitura
+#define DESOCUPADO 0
+#define OCUPADO 1
 
 typedef struct {
     int numero;
     int capacidade;
     float valorDiaria;
-    StatusQuarto status;
-    int ativo; 
+    int status; // 0 = DESOCUPADO, 1 = OCUPADO
+    int ativo;  // 1 = Quarto existe, 0 = Removido (logicamente)
 } Quarto;
 
-void cadastrarQuarto(Quarto *novoQuarto);
+// Protótipos
+void cadastrarQuarto(Quarto *q);
 void listarQuartos();
-float buscarValorDiaria(int numeroQuarto);
-void atualizarStatusQuarto(int numeroQuarto, StatusQuarto novoStatus);
+void atualizarStatusQuarto(int numero, int novoStatus);
+float buscarValorDiaria(int numero);
 
 #endif
