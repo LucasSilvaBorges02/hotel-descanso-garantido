@@ -10,8 +10,13 @@
 
 #define ARQ_ESTADIAS "data/estadias.dat"
 #define ARQ_QUARTOS "data/quartos.dat"
+#define ARQ_CLIENTES "data/clientes.dat"
 
-// Função auxiliar de data
+// ---------------------------------------------------------
+// Funções Auxiliares (Data e Diárias)
+// ---------------------------------------------------------
+
+// Converte data para timestamp (tempo em segundos)
 static time_t data_para_time(int d, int m, int a, int hora) {
     struct tm t = {0};
     t.tm_mday = d; t.tm_mon = m - 1; t.tm_year = a - 1900;
@@ -19,6 +24,7 @@ static time_t data_para_time(int d, int m, int a, int hora) {
     return mktime(&t);
 }
 
+// Calcula diferença de dias entre entrada (14h) e saída (12h)
 int calcularDiarias(int d1, int m1, int a1, int d2, int m2, int a2) {
     time_t t_entrada = data_para_time(d1, m1, a1, 14);
     time_t t_saida = data_para_time(d2, m2, a2, 12);
@@ -28,10 +34,10 @@ int calcularDiarias(int d1, int m1, int a1, int d2, int m2, int a2) {
     return (diarias < 1) ? 1 : diarias;
 }
 
-// Verifica conflito de datas
+// Verifica se já existe reserva para aquele quarto nas datas informadas
 int verificarConflitoArquivo(int numQuarto, int d1, int m1, int a1, int d2, int m2, int a2) {
     FILE *f = fopen(ARQ_ESTADIAS, "rb");
-    if (!f) return 0;
+    if (!f) return 0; // Sem estadias, sem conflito
 
     time_t novo_inicio = data_para_time(d1, m1, a1, 14);
     time_t novo_fim = data_para_time(d2, m2, a2, 12);
@@ -42,9 +48,10 @@ int verificarConflitoArquivo(int numQuarto, int d1, int m1, int a1, int d2, int 
             time_t inicio_existente = data_para_time(e.diaEntrada, e.mesEntrada, e.anoEntrada, 14);
             time_t fim_existente = data_para_time(e.diaSaida, e.mesSaida, e.anoSaida, 12);
 
+            // Verifica sobreposição de datas
             if (difftime(novo_inicio, fim_existente) < 0 && difftime(inicio_existente, novo_fim) < 0) {
                 fclose(f);
-                return 1; // Conflito!
+                return 1; // Conflito encontrado!
             }
         }
     }
@@ -52,10 +59,15 @@ int verificarConflitoArquivo(int numQuarto, int d1, int m1, int a1, int d2, int 
     return 0;
 }
 
+// ---------------------------------------------------------
+// Funções Principais do Módulo
+// ---------------------------------------------------------
+
 void cadastrarEstadia() {
     Estadia nova;
     int qtdHospedes;
     
+    // 1. Validar Cliente
     printf("Codigo do Cliente: ");
     scanf("%d", &nova.codigoCliente);
     
@@ -64,6 +76,7 @@ void cadastrarEstadia() {
         return;
     }
 
+    // 2. Coletar dados da Estadia
     printf("Qtd Hospedes: ");
     scanf("%d", &qtdHospedes);
     
@@ -81,10 +94,11 @@ void cadastrarEstadia() {
                                       nova.diaSaida, nova.mesSaida, nova.anoSaida);
     
     if (nova.qtdDiarias <= 0) {
-        printf("Data invalida.\n");
+        printf("Data invalida (saida antes da entrada).\n");
         return;
     }
 
+    // 3. Buscar Quarto Disponível (Lendo arquivo de Quartos)
     FILE *fQuartos = fopen(ARQ_QUARTOS, "rb");
     if (!fQuartos) { printf("Sem quartos cadastrados.\n"); return; }
     
@@ -92,6 +106,7 @@ void cadastrarEstadia() {
     int quartoEncontrado = -1;
     
     while(fread(&q, sizeof(Quarto), 1, fQuartos)) {
+        // Regra: Quarto ativo, Capacidade suporta, e sem conflito de agenda
         if (q.ativo && q.capacidade >= qtdHospedes) {
             if (!verificarConflitoArquivo(q.numero, nova.diaEntrada, nova.mesEntrada, nova.anoEntrada, 
                                           nova.diaSaida, nova.mesSaida, nova.anoSaida)) {
@@ -107,14 +122,16 @@ void cadastrarEstadia() {
         return;
     }
 
+    // 4. Salvar Estadia
     nova.numeroQuarto = quartoEncontrado;
-    nova.ativo = 1;
-    nova.codigo = (int)time(NULL); 
+    nova.ativo = 1; // Check-in Ativo
+    nova.codigo = (int)time(NULL); // Gera ID único baseado no relógio
 
     FILE *fEst = fopen(ARQ_ESTADIAS, "ab");
     fwrite(&nova, sizeof(Estadia), 1, fEst);
     fclose(fEst);
 
+    // Atualiza status visual do quarto
     atualizarStatusQuarto(quartoEncontrado, OCUPADO);
 
     printf("Estadia agendada! Quarto: %d | Codigo Estadia: %d\n", quartoEncontrado, nova.codigo);
@@ -135,18 +152,22 @@ void baixarEstadia() {
     int achou = 0;
     while(fread(&e, sizeof(Estadia), 1, f)) {
         if (e.ativo && e.codigo == codEstadia) {
-            e.ativo = 0; // Check-out
+            e.ativo = 0; // Marca como Check-out realizado
             
+            // Volta cursor para sobrescrever o registro atualizado
             fseek(f, -(long)sizeof(Estadia), SEEK_CUR);
             fwrite(&e, sizeof(Estadia), 1, f);
             
+            // Calcula preço total
             float valorDiaria = buscarValorDiaria(e.numeroQuarto);
             float total = e.qtdDiarias * valorDiaria;
             
+            // Libera quarto
             atualizarStatusQuarto(e.numeroQuarto, DESOCUPADO);
             
             printf("Baixa realizada! Total a pagar: R$ %.2f\n", total);
-            printf("Pontos Fidelidade: %d\n", e.qtdDiarias * 10);
+            // Mostra os pontos ganhos nesta estadia específica
+            printf("Pontos ganhos nesta estadia: %d\n", e.qtdDiarias * 10);
             achou = 1;
             break;
         }
@@ -175,4 +196,24 @@ void listarEstadias() {
     }
     printf("--------------------------------\n");
     fclose(f);
+}
+
+// ---------------------------------------------------------
+// NOVA FUNÇÃO: PONTOS DE FIDELIDADE
+// ---------------------------------------------------------
+int calcularPontosFidelidade(int codCliente) {
+    FILE *f = fopen(ARQ_ESTADIAS, "rb");
+    if (!f) return 0; // Se não tem arquivo, cliente tem 0 pontos
+
+    Estadia e;
+    int totalPontos = 0;
+
+    while(fread(&e, sizeof(Estadia), 1, f)) {
+        // Soma pontos apenas se a estadia for do cliente E já estiver finalizada (check-out feito)
+        if (e.codigoCliente == codCliente && e.ativo == 0) {
+            totalPontos += (e.qtdDiarias * 10);
+        }
+    }
+    fclose(f);
+    return totalPontos;
 }

@@ -23,11 +23,12 @@ int main() {
         printf("7. Nova Estadia (Check-in)\n");
         printf("8. Baixa Estadia (Check-out)\n");
         printf("9. Listar Estadias\n");
+        printf("10. Remover Cliente\n"); // Nova Opção
         printf("0. SAIR\n");
         printf("Escolha: ");
         
         scanf("%d", &opcao);
-        getchar(); // Limpa o buffer
+        getchar(); // Limpa o buffer do teclado
 
         switch(opcao) {
             case 1: {
@@ -67,6 +68,9 @@ int main() {
                 break;
             case 9:
                 listarEstadias();
+                break;
+            case 10:
+                remover_cliente(); // Nova Chamada
                 break;
             case 0: 
                 printf("Saindo...\n"); 

@@ -12,5 +12,6 @@ typedef struct {
 void cadastrar_cliente(Cliente c);
 void listar_clientes();
 int codigo_cliente_existe(int codigo);
+void remover_cliente();
 
 #endif

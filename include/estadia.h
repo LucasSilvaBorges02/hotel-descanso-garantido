@@ -13,6 +13,8 @@ typedef struct {
 } Estadia;
 
 // Protótipos
+int calcularPontosFidelidade(int codCliente);
+
 void cadastrarEstadia();
 void baixarEstadia();
 void listarEstadias();
