@@ -1,20 +1,17 @@
 #ifndef FUNCIONARIO_H
 #define FUNCIONARIO_H
 
-#define MAX_FUNCIONARIOS 100
-
 typedef struct {
-    int codigo;
-    char nome[100];
-    char telefone[20];
-    char cargo[50];
+    int id;
+    char nome[50];
+    char cargo[30];
     float salario;
-    int ativo; // 1 = cadastrado
 } Funcionario;
 
-void cadastrarFuncionario(Funcionario funcionarios[], int *qtFuncionarios);
-int buscarFuncionarioPorCodigo(Funcionario funcionarios[], int qt, int codigo);
-int buscarFuncionarioPorNome(Funcionario funcionarios[], int qt, char nome[]);
-void listarFuncionario(Funcionario f);
+// Protótipos das funções
+void cadastrarFuncionario();
+void listarFuncionario();
+void buscarFuncionario();
+void removerFuncionario();
 
 #endif

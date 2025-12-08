@@ -1,19 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "funcionarios.h"
+#include "../include/funcionario.h"
 
-#define ARQ_FUNCIONARIOS "data/funcionarios.dat"
+#define ARQ_FUNCIONARIO "data/funcionario.dat"
 
 // ------------------------------------------
 // Função para cadastrar um funcionário
 // ------------------------------------------
 void cadastrarFuncionario() {
-    FILE *file = fopen(ARQ_FUNCIONARIOS, "ab");
-    Funcionarios f;
+    FILE *file = fopen(ARQ_FUNCIONARIO, "ab");
+    Funcionario f;
 
     if (!file) {
-        printf("Erro ao abrir o arquivo de funcionarios!\n");
+        printf("Erro ao abrir o arquivo de funcionario!\n");
         return;
     }
 
@@ -33,7 +33,7 @@ void cadastrarFuncionario() {
     printf("Salário: ");
     scanf("%f", &f.salario);
 
-    fwrite(&f, sizeof(Funcionarios), 1, file);
+    fwrite(&f, sizeof(Funcionario), 1, file);
     fclose(file);
 
     printf("Funcionário cadastrado com sucesso!\n");
@@ -42,9 +42,9 @@ void cadastrarFuncionario() {
 // ------------------------------------------
 // Lista todos os funcionários cadastrados
 // ------------------------------------------
-void listarFuncionarios() {
-    FILE *file = fopen(ARQ_FUNCIONARIOS, "rb");
-    Funcionarios f;
+void listarFuncionario() {
+    FILE *file = fopen(ARQ_FUNCIONARIO, "rb");
+    Funcionario f;
 
     if (!file) {
         printf("Nenhum funcionário encontrado.\n");
@@ -53,7 +53,7 @@ void listarFuncionarios() {
 
     printf("\n--- Lista de Funcionários ---\n");
 
-    while (fread(&f, sizeof(Funcionarios), 1, file)) {
+    while (fread(&f, sizeof(Funcionario), 1, file)) {
         printf("ID: %d\n", f.id);
         printf("Nome: %s\n", f.nome);
         printf("Cargo: %s\n", f.cargo);
@@ -68,8 +68,8 @@ void listarFuncionarios() {
 // Buscar funcionário pelo ID
 // ------------------------------------------
 void buscarFuncionario() {
-    FILE *file = fopen(ARQ_FUNCIONARIOS, "rb");
-    Funcionarios f;
+    FILE *file = fopen(ARQ_FUNCIONARIO, "rb");
+    Funcionario f;
     int idBusca, encontrado = 0;
 
     if (!file) {
@@ -80,7 +80,7 @@ void buscarFuncionario() {
     printf("Digite o ID do funcionário: ");
     scanf("%d", &idBusca);
 
-    while (fread(&f, sizeof(Funcionarios), 1, file)) {
+    while (fread(&f, sizeof(Funcionario), 1, file)) {
         if (f.id == idBusca) {
             printf("\n--- Funcionário Encontrado ---\n");
             printf("ID: %d\n", f.id);
@@ -103,10 +103,10 @@ void buscarFuncionario() {
 // Remove funcionário
 // ------------------------------------------
 void removerFuncionario() {
-    FILE *file = fopen(ARQ_FUNCIONARIOS, "rb");
+    FILE *file = fopen(ARQ_FUNCIONARIO, "rb");
     FILE *temp = fopen("data/temp.dat", "wb");
 
-    Funcionarios f;
+    Funcionario f;
     int idRemove, removido = 0;
 
     if (!file || !temp) {
@@ -117,19 +117,19 @@ void removerFuncionario() {
     printf("ID do funcionário a remover: ");
     scanf("%d", &idRemove);
 
-    while (fread(&f, sizeof(Funcionarios), 1, file)) {
+    while (fread(&f, sizeof(Funcionario), 1, file)) {
         if (f.id == idRemove) {
             removido = 1;
         } else {
-            fwrite(&f, sizeof(Funcionarios), 1, temp);
+            fwrite(&f, sizeof(Funcionario), 1, temp);
         }
     }
 
     fclose(file);
     fclose(temp);
 
-    remove(ARQ_FUNCIONARIOS);
-    rename("data/temp.dat", ARQ_FUNCIONARIOS);
+    remove(ARQ_FUNCIONARIO);
+    rename("data/temp.dat", ARQ_FUNCIONARIO);
 
     if (removido)
         printf("Funcionário removido com sucesso!\n");

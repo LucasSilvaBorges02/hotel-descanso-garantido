@@ -1,8 +1,6 @@
 #ifndef QUARTO_H
 #define QUARTO_H
 
-#define MAX_QUARTOS 50
-
 typedef enum { OCUPADO = 1, DESOCUPADO = 0 } StatusQuarto;
 
 typedef struct {
@@ -10,13 +8,12 @@ typedef struct {
     int capacidade;
     float valorDiaria;
     StatusQuarto status;
-    int ativo; // 1 = cadastrado
+    int ativo; 
 } Quarto;
 
-void cadastrarQuarto(Quarto quartos[], int *qtQuartos);
-int buscarQuartoDisponivel(Quarto quartos[], int qt, int qtdHospedes);
-int buscarQuartoPorNumero(Quarto quartos[], int qt, int numero);
-void listarQuarto(Quarto q);
+void cadastrarQuarto(Quarto *novoQuarto);
+void listarQuartos();
+float buscarValorDiaria(int numeroQuarto);
+void atualizarStatusQuarto(int numeroQuarto, StatusQuarto novoStatus);
 
 #endif
-
