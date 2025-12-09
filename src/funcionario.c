@@ -5,34 +5,29 @@
 
 #define ARQ_FUNCIONARIO "data/funcionario.dat"
 
-void cadastrarFuncionario() {
-    FILE *file = fopen(ARQ_FUNCIONARIO, "ab");
-    Funcionario f;
+int funcionarioExiste(int id) {
+    FILE *file = fopen(ARQ_FUNCIONARIO, "rb");
+    if (!file) return 0;
 
+    Funcionario f;
+    while(fread(&f, sizeof(Funcionario), 1, file)) {
+        if (f.id == id) {
+            fclose(file);
+            return 1;
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
+void cadastrarFuncionario(Funcionario f) {
+    FILE *file = fopen(ARQ_FUNCIONARIO, "ab");
     if (!file) {
         printf("Erro ao abrir o arquivo de funcionario!\n");
         return;
     }
-
-    printf("\n--- Cadastro de Funcionario ---\n");
-    printf("ID: ");
-    scanf("%d", &f.id);
-    getchar(); 
-
-    printf("Nome: ");
-    fgets(f.nome, 50, stdin);
-    f.nome[strcspn(f.nome, "\n")] = '\0';
-
-    printf("Cargo: ");
-    fgets(f.cargo, 30, stdin);
-    f.cargo[strcspn(f.cargo, "\n")] = '\0';
-
-    printf("Salario: ");
-    scanf("%f", &f.salario);
-
     fwrite(&f, sizeof(Funcionario), 1, file);
     fclose(file);
-
     printf("Funcionario cadastrado com sucesso!\n");
 }
 
@@ -41,7 +36,7 @@ void listarFuncionario() {
     Funcionario f;
 
     if (!file) {
-        printf("Nenhum funcionario encontrado.\n");
+        printf("Nenhum funcionario cadastrado.\n");
         return;
     }
 
@@ -67,7 +62,12 @@ void buscarFuncionario() {
     }
 
     printf("Digite o ID do funcionario: ");
-    scanf("%d", &idBusca);
+    if(scanf("%d", &idBusca) != 1) {
+        printf("ID invalido.\n");
+        int c; while ((c = getchar()) != '\n' && c != EOF); 
+        fclose(file);
+        return;
+    }
 
     while (fread(&f, sizeof(Funcionario), 1, file)) {
         if (f.id == idBusca) {
@@ -87,23 +87,52 @@ void buscarFuncionario() {
     fclose(file);
 }
 
+// --- FUNÇÃO ATUALIZADA COM "VOLTAR" ---
 void removerFuncionario() {
     FILE *file = fopen(ARQ_FUNCIONARIO, "rb");
-    FILE *temp = fopen("data/temp_func.dat", "wb"); // Nome temporário seguro
-
-    Funcionario f;
-    int idRemove, removido = 0;
-
-    if (!file || !temp) {
-        printf("Erro ao acessar arquivos.\n");
-        if (file) fclose(file);
-        if (temp) fclose(temp);
+    if (!file) {
+        printf("Nenhum funcionario cadastrado para remover.\n");
         return;
     }
 
-    printf("ID do funcionario a remover: ");
-    scanf("%d", &idRemove);
+    Funcionario f;
+    
+    // 1. MOSTRAR A LISTA
+    printf("\n=== ESCOLHA UM FUNCIONARIO PARA REMOVER ===\n");
+    while (fread(&f, sizeof(Funcionario), 1, file)) {
+        printf("ID: %d \t| Nome: %s\n", f.id, f.nome);
+    }
+    printf("-------------------------------------------\n");
 
+    // 2. PEDIR O ID (Com opção de sair)
+    int idRemove;
+    printf("Digite o ID do funcionario (ou 0 para VOLTAR): ");
+    
+    if (scanf("%d", &idRemove) != 1) {
+        printf("Entrada invalida.\n");
+        int c; while ((c = getchar()) != '\n' && c != EOF); // Limpa buffer
+        fclose(file);
+        return;
+    }
+
+    // SE O USUÁRIO DIGITAR 0, CANCELA TUDO
+    if (idRemove == 0) {
+        printf("Operacao cancelada. Voltando ao menu...\n");
+        fclose(file);
+        return;
+    }
+
+    // 3. AGORA SIM, PROCESSA A REMOÇÃO
+    rewind(file); // Volta pro começo do arquivo
+
+    FILE *temp = fopen("data/temp_func.dat", "wb");
+    if (!temp) {
+        printf("Erro ao criar arquivo temporario.\n");
+        fclose(file);
+        return;
+    }
+
+    int removido = 0;
     while (fread(&f, sizeof(Funcionario), 1, file)) {
         if (f.id == idRemove) {
             removido = 1;
@@ -119,7 +148,7 @@ void removerFuncionario() {
     rename("data/temp_func.dat", ARQ_FUNCIONARIO);
 
     if (removido)
-        printf("Funcionario removido com sucesso!\n");
+        printf("Funcionario ID %d removido com sucesso!\n", idRemove);
     else
-        printf("Funcionario nao encontrado.\n");
+        printf("Funcionario nao encontrado na lista.\n");
 }

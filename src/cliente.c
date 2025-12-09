@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../include/cliente.h"
-#include "../include/estadia.h" // Necessário para ver os pontos
+#include "../include/estadia.h" 
 
 #define ARQ_CLIENTE "data/clientes.dat"
 
-// Função auxiliar para verificar existência (usada aqui e no check-in)
 int codigo_cliente_existe(int codigo) {
     FILE *file = fopen(ARQ_CLIENTE, "rb");
     if (!file) return 0;
@@ -23,7 +22,6 @@ int codigo_cliente_existe(int codigo) {
 }
 
 void cadastrar_cliente(Cliente c) {
-    // Validação: Não permitir ID duplicado
     if (codigo_cliente_existe(c.codigo)) {
         printf("ERRO: Ja existe um cliente com o codigo %d.\n", c.codigo);
         return;
@@ -51,41 +49,68 @@ void listar_clientes() {
 
     printf("\n--- Lista de Clientes ---\n");
     while (fread(&c, sizeof(Cliente), 1, file)) {
-        // Busca os pontos acumulados usando a função do módulo Estadia
         int pontos = calcularPontosFidelidade(c.codigo);
 
         printf("Codigo: %d\n", c.codigo);
         printf("Nome: %s\n", c.nome);
         printf("Telefone: %s\n", c.telefone);
         printf("Endereco: %s\n", c.endereco);
-        printf("Pontos Fidelidade: %d\n", pontos); // Mostra os pontos aqui
+        printf("Pontos Fidelidade: %d\n", pontos);
         printf("-------------------------\n");
     }
     fclose(file);
 }
 
+// --- FUNÇÃO ATUALIZADA COM "VOLTAR" ---
 void remover_cliente() {
     FILE *file = fopen(ARQ_CLIENTE, "rb");
-    // Cria um arquivo temporário
-    FILE *temp = fopen("data/temp_clientes.dat", "wb"); 
     
-    Cliente c;
-    int idRemove, removido = 0;
-
-    if (!file || !temp) {
-        printf("Erro ao abrir arquivos de cliente (verifique se existem clientes cadastrados).\n");
-        if (file) fclose(file);
-        if (temp) fclose(temp);
+    if (!file) {
+        printf("Nenhum cliente cadastrado para remover.\n");
         return;
     }
 
-    printf("Digite o codigo do cliente para remover: ");
-    scanf("%d", &idRemove);
+    Cliente c;
 
-    // Lê do original e escreve no temporário APENAS se não for o ID removido
+    // 1. MOSTRAR A LISTA
+    printf("\n=== ESCOLHA UM CLIENTE PARA REMOVER ===\n");
+    while (fread(&c, sizeof(Cliente), 1, file)) {
+        printf("Codigo: %d \t| Nome: %s\n", c.codigo, c.nome);
+    }
+    printf("---------------------------------------\n");
+
+    // 2. PEDIR O CÓDIGO (Agora com opção de sair)
+    int idRemove;
+    printf("Digite o codigo do cliente (ou 0 para VOLTAR): ");
+    
+    if (scanf("%d", &idRemove) != 1) {
+        printf("Entrada invalida.\n");
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF); 
+        fclose(file);
+        return;
+    }
+
+    // SE O USUÁRIO DIGITAR 0, CANCELA TUDO E VOLTA
+    if (idRemove == 0) {
+        printf("Operacao cancelada. Voltando ao menu...\n");
+        fclose(file);
+        return;
+    }
+
+    // 3. AGORA SIM, CRIA O TEMPORÁRIO E REMOVE
+    rewind(file); // Volta pro começo do arquivo original
+
+    FILE *temp = fopen("data/temp_clientes.dat", "wb"); 
+    if (!temp) {
+        printf("Erro ao criar arquivo temporario.\n");
+        fclose(file);
+        return;
+    }
+
+    int removido = 0;
     while(fread(&c, sizeof(Cliente), 1, file)) {
         if (c.codigo == idRemove) {
-            removido = 1; // Encontrou o alvo, não copia para o novo arquivo
+            removido = 1; 
         } else {
             fwrite(&c, sizeof(Cliente), 1, temp);
         }
@@ -94,12 +119,11 @@ void remover_cliente() {
     fclose(file);
     fclose(temp);
 
-    // Apaga o arquivo antigo e renomeia o temporário para ser o oficial
     remove(ARQ_CLIENTE);
     rename("data/temp_clientes.dat", ARQ_CLIENTE);
 
     if (removido)
         printf("Cliente %d removido com sucesso!\n", idRemove);
     else
-        printf("Cliente nao encontrado.\n");
+        printf("Cliente nao encontrado na lista.\n");
 }

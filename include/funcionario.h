@@ -9,9 +9,10 @@ typedef struct {
 } Funcionario;
 
 // Protótipos
-void cadastrarFuncionario();
+void cadastrarFuncionario(Funcionario f); // Agora recebe a struct
 void listarFuncionario();
 void buscarFuncionario();
-void removerFuncionario();
+void removerFuncionario(); // Nova função
+int funcionarioExiste(int id); // Nova função para testes e validação
 
 #endif
