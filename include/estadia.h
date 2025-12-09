@@ -13,8 +13,11 @@ typedef struct {
 } Estadia;
 
 // Protótipos
-int calcularPontosFidelidade(int codCliente);
 
+// --- NOVO: Necessário para o teste automatizado acessar a lógica matemática ---
+int calcularDiarias(int d1, int m1, int a1, int d2, int m2, int a2);
+
+int calcularPontosFidelidade(int codCliente);
 void cadastrarEstadia();
 void baixarEstadia();
 void listarEstadias();

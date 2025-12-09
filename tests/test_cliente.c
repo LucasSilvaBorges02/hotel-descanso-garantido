@@ -1,56 +1,60 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include "../include/munit.h"
 #include "../include/cliente.h"
 
-// Como estamos compilando apenas o teste, não usamos o main.c original.
-// Criamos um main específico apenas para rodar os testes.
-
-void teste_cadastro_sucesso() {
-    printf("\n[TESTE 1] Tentativa de Cadastro Novo...\n");
-    
+// --- SETUP ---
+// Define um cliente de teste padrão
+static Cliente gerar_cliente_teste(int codigo) {
     Cliente c;
-    c.codigo = 999; // Usamos um ID alto para não misturar com os seus
-    strcpy(c.nome, "Cliente Teste Automatizado");
+    c.codigo = codigo;
+    strcpy(c.nome, "Cliente Teste Munit");
     strcpy(c.telefone, "00000000");
-    strcpy(c.endereco, "Rua dos Testes, 0");
-
-    // Verifica se já existe antes (para garantir que o teste é limpo)
-    if (!codigo_cliente_existe(999)) {
-        cadastrar_cliente(c);
-        
-        // Verificação
-        if (codigo_cliente_existe(999)) {
-            printf("RESULTADO: SUCESSO (Cliente cadastrado e encontrado).\n");
-        } else {
-            printf("RESULTADO: FALHA (Cliente nao foi salvo).\n");
-        }
-    } else {
-        printf("AVISO: Cliente 999 ja existia. O teste de sucesso nao pode ser validado corretamente.\n");
-    }
+    strcpy(c.endereco, "Rua Unitario");
+    return c;
 }
 
-void teste_duplicidade() {
-    printf("\n[TESTE 2] Tentativa de Duplicidade (Deve falhar)...\n");
-    
-    Cliente c;
-    c.codigo = 999; // O mesmo ID do teste anterior
-    strcpy(c.nome, "Cliente Duplicado");
-    strcpy(c.telefone, "11111111");
-    strcpy(c.endereco, "Rua Falsa");
+// --- TESTES ---
 
-    printf("Esperado: Mensagem de erro de duplicidade abaixo:\n");
-    printf("--- SAIDA DO SISTEMA ---\n");
-    cadastrar_cliente(c); // Deve imprimir o erro no console
-    printf("------------------------\n");
+MunitResult teste_cadastro_novo(const MunitParameter params[], void* data) {
+    // Tenta cadastrar cliente 800
+    Cliente c = gerar_cliente_teste(800);
+    
+    // Se existir de um teste anterior, removemos (simulação de limpeza)
+    // Como não temos 'remover' exposto fácil aqui, usamos um ID alto que esperamos estar livre
+    
+    cadastrar_cliente(c);
+
+    // Verifica se agora existe
+    munit_assert_int(codigo_cliente_existe(800), ==, 1);
+    
+    return MUNIT_OK;
 }
 
-int main() {
-    printf("=== INICIANDO BATERIA DE TESTES: CLIENTES ===\n");
+MunitResult teste_bloqueio_duplicidade(const MunitParameter params[], void* data) {
+    Cliente c = gerar_cliente_teste(800); // Mesmo ID do anterior
+
+    // O sistema deve imprimir erro no console e não crashar
+    // A função retorna void, então verificamos a integridade do banco
+    cadastrar_cliente(c);
     
-    teste_cadastro_sucesso();
-    teste_duplicidade();
+    // O ID deve continuar existindo (sucesso)
+    munit_assert_int(codigo_cliente_existe(800), ==, 1);
     
-    printf("\n=== FIM DOS TESTES ===\n");
-    return 0;
+    return MUNIT_OK;
+}
+
+// --- SUÍTE ---
+static MunitTest testes[] = {
+    { (char*) "/novo-cliente", teste_cadastro_novo, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { (char*) "/duplicidade", teste_bloqueio_duplicidade, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
+};
+
+static const MunitSuite suite = {
+    (char*) "Cliente-Tests", testes, NULL, 1, MUNIT_SUITE_OPTION_NONE
+};
+
+int main(int argc, char* argv[]) {
+    return munit_suite_main(&suite, (void*) "µnit", argc, argv);
 }

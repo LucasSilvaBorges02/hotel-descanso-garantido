@@ -22,7 +22,21 @@ gcc src/*.c -I include -o hotel.exe
 ./hotel.exe
 
 
+Para rodar o teste de estadia, use este comando específico:
+
+gcc tests/test_estadia.c src/estadia.c src/cliente.c src/quarto.c src/munit.c -I include -o teste_estadia.exe
+./teste_estadia.exe
+
+
+
 Para rodar o teste de clientes, use este comando específico:
 
-gcc tests/test_cliente.c src/cliente.c -I include -o teste_clientes.exe
-./teste_clientes.exe
+gcc tests/test_cliente.c src/cliente.c src/estadia.c src/quarto.c src/munit.c -I include -o teste_cliente.exe
+./teste_cliente.exe
+
+
+
+Para rodar o teste de quartos, use este comando específico:
+
+gcc tests/test_quarto.c src/quarto.c src/munit.c -I include -o teste_quarto.exe
+./teste_quarto.exe

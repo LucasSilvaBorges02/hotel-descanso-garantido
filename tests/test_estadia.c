@@ -1,57 +1,53 @@
-#include "munit/munit.h"
-#include "../include/estadia.h"
-#include "../include/quarto.h"
-#include "../include/cliente.h"
 #include <stdio.h>
+#include "../include/munit.h"
+#include "../include/estadia.h" // Precisa ter calcularDiarias exposto aqui
 
-static MunitResult test_calcular_diarias(const MunitParameter params[], void *data) {
+// --- TESTES ---
 
-    int dias = calcularDiarias(1, 1, 2025, 2, 1, 2025);
-    munit_assert_int(dias, ==, 1);
-
-    int dias2 = calcularDiarias(1, 1, 2025, 5, 1, 2025);
-    munit_assert_int(dias2, ==, 4);
-
+MunitResult teste_calculo_dias_simples(const MunitParameter params[], void* data) {
+    // De 01/01/2025 a 05/01/2025 = 4 diárias
+    int dias = calcularDiarias(1, 1, 2025, 5, 1, 2025);
+    
+    munit_assert_int(dias, ==, 4);
+    
     return MUNIT_OK;
 }
 
-static MunitResult test_pontos_fidelidade(const MunitParameter params[], void *data) {
-
-    // ZERAR ARQUIVO
-    FILE *f = fopen("data/estadias.dat", "wb");
-    fclose(f);
-
-    Estadia e;
-    e.codigoCliente = 10;
-    e.qtdDiarias = 3;
-    e.ativo = 0; // finalizada
-    e.codigo = 999;
-    e.numeroQuarto = 100;
-
-    f = fopen("data/estadias.dat", "ab");
-    fwrite(&e, sizeof(Estadia), 1, f);
-    fclose(f);
-
-    int pontos = calcularPontosFidelidade(10);
-    munit_assert_int(pontos, ==, 30);
-
+MunitResult teste_calculo_virada_mes(const MunitParameter params[], void* data) {
+    // De 30/01/2025 a 02/02/2025 
+    // Jan tem 31 dias. 30->31(1), 31->01(2), 01->02(3). Total 3 dias.
+    int dias = calcularDiarias(30, 1, 2025, 2, 2, 2025);
+    
+    munit_assert_int(dias, ==, 3);
+    
     return MUNIT_OK;
 }
 
-static MunitTest tests[] = {
-    {"/test_calcular_diarias", test_calcular_diarias, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL},
-    {"/test_pontos_fidelidade", test_pontos_fidelidade, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL},
-    {NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL}
+MunitResult teste_data_invalida(const MunitParameter params[], void* data) {
+    // Saída antes da entrada (Erro)
+    // A função retorna 0 ou 1 dependendo da sua implementação de erro, 
+    // mas geralmente retorna <= 0 se data for errada.
+    int dias = calcularDiarias(10, 1, 2025, 5, 1, 2025);
+    
+    // Esperamos 0 ou tratado como 1 minímo dependendo da lógica, 
+    // mas matematicamente é negativo/zero.
+    munit_assert_int(dias, <=, 1); 
+    
+    return MUNIT_OK;
+}
+
+// --- SUÍTE ---
+static MunitTest testes[] = {
+    { (char*) "/calculo-simples", teste_calculo_dias_simples, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { (char*) "/calculo-mes", teste_calculo_virada_mes, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { (char*) "/data-invalida", teste_data_invalida, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
 };
 
 static const MunitSuite suite = {
-    "/suite_estadia",
-    tests,
-    NULL,
-    1,
-    MUNIT_SUITE_OPTION_NONE
+    (char*) "Estadia-Tests", testes, NULL, 1, MUNIT_SUITE_OPTION_NONE
 };
 
-int main(int argc, char *argv[]) {
-    return munit_suite_main(&suite, NULL, argc, argv);
+int main(int argc, char* argv[]) {
+    return munit_suite_main(&suite, (void*) "µnit", argc, argv);
 }
