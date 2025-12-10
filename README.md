@@ -21,7 +21,9 @@ Para utilizar o sistema principal (Menu do Hotel), utilize o comando abaixo no t
 gcc src/*.c -I include -o hotel.exe
 ./hotel.exe
 
-##TESTES MUNIT
+TESTE MUnit👾
+
+
 Para rodar o teste de estadia, use este comando específico:
 
 gcc tests/test_estadia.c src/estadia.c src/cliente.c src/quarto.c src/munit.c -I include -o teste_estadia.exe
@@ -40,3 +42,10 @@ Para rodar o teste de quartos, use este comando específico:
 
 gcc tests/test_quarto.c src/quarto.c src/munit.c -I include -o teste_quarto.exe
 ./teste_quarto.exe
+
+
+
+Para rodar o teste de funcionário, use este comando específico:
+
+gcc tests/test_funcionario.c src/funcionario.c src/munit.c -I include -o teste_funcionario.exe
+./teste_funcionario.exe
