@@ -7,6 +7,7 @@ O programa permite:
 - Cadastro de clientes
 - Cadastro de quartos
 - Registro de estadias
+- Cadastro de Funcionários
 
 Integrantes:
 - Henrique Fernandes
